@@ -1,0 +1,19 @@
+{
+  "name": "soundflow",
+  "version": "1.0.0",
+  "description": "music 4u",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ombralunare/soundflow.git"
+  },
+  "author": "Natalie",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ombralunare/soundflow/issues"
+  },
+  "homepage": "https://github.com/ombralunare/soundflow#readme"
+}

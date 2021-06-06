@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script>
+            function sendit()
+            {
+                let txt = document.getElementById("poepface").value;
+                let hxr = new XMLHttpRequest();
+                hxr.open("POST","/");
+                hxr.onloadend = function()
+                {
+                    console.log(this.response);
+                };
+                hxr.send(txt);
+            };
+        </script>
+    </head>
+    <body>
+        <input id="poepface" type="text">
+        <br>
+        <input type="button" value="download" onclick="sendit()">
+    </body>
+</html>
