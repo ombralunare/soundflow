@@ -4,20 +4,48 @@
         <script>
             function sendit()
             {
-                let txt = document.getElementById("poepface").value;
-                let hxr = new XMLHttpRequest();
-                hxr.open("POST","/");
-                hxr.onloadend = function()
+                let txt = document.getElementById("targetUrl").value;
+                let xhr = new XMLHttpRequest();  xhr.open("POST","/?v=1.0.0");
+
+                xhr.onloadstart = function()
                 {
-                    console.log(this.response);
+                    let btn = document.getElementById("grab");
+                    btn.style.display = "none";
+                    let mtr = document.createElement("meter");
+                    mtr.setAttribute("id", "busy");
+                    mtr.setAttribute("min", 0);
+                    mtr.setAttribute("max", 100);
+                    mtr.value = 0;
+                    document.body.appendChild(mtr);
+
                 };
-                hxr.send(txt);
+
+                xhr.onprogress = function(event)
+                {
+                    let prc = ((event.loaded / event.total) *100);
+                    prc = (prc.toFixed(2)*1);
+                    document.getElementById("busy").value = prc;
+                    // console.log(prc);
+                };
+
+                xhr.onloadend = function()
+                {
+                    console.log("done");
+
+                    let pop = document.createElement("div");
+                    div.innerHTML = `
+                                        <a href="/song.zip" download >download</a>
+                                    `;
+                    document.body.appendChild(pop);
+                };
+
+                xhr.send(txt);
             };
         </script>
     </head>
     <body>
-        <input id="poepface" type="text">
+        <input id="targetUrl" type="text">
         <br>
-        <input type="button" value="download" onclick="sendit()">
+        <input id="grab" type="button" value="download" onclick="sendit()">
     </body>
 </html>

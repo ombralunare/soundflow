@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/ombralunare/soundflow/issues"
   },
-  "homepage": "https://github.com/ombralunare/soundflow#readme"
+  "homepage": "https://github.com/ombralunare/soundflow#readme",
+  "dependencies": {
+    "zip-local": "^0.3.4"
+  }
 }
