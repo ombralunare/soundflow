@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/ombralunare/soundflow#readme",
   "dependencies": {
+    "mime-types": "^2.1.31",
     "zip-local": "^0.3.4"
   }
 }

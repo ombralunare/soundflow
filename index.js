@@ -5,10 +5,11 @@
     args.shift(); args.shift(); // rip out the 1st & 2nd as we dont need them, we only want what the cli user typed
     var cliUrl = args[0]; // grabs 1st item
 
-    const { spawn } = require('child_process'); // function - gets spawn process
-    const http = require('http'); // needed to create http server
-    const disk = require('fs'); // needed to read file
-    const zlib = require('zip-local');
+    const { spawn } = require("child_process"); // function - gets spawn process
+    const http = require("http"); // needed to create http server
+    const disk = require("fs"); // needed to read file
+    const zlib = require("zip-local");
+    const mime = require("mime-types");
 // -----------------------------------------------------------------------------------------------------------------------------
 
 
@@ -99,30 +100,23 @@
         {
             if(req.method == "GET") // if ANY request method is 'GET' .. then serve index
             {
-                let path = (__dirname+(req.url||""));
+                let path,stat;
+                path = (req.url||""); if(path.startsWith("/")){path = path.slice(1)};
+                path = (__dirname +"/"+ (path||"index.html"));
 
-                if(!req.url || (req.url == "/"))
-                {
-                    rsp.statusCode=200;
-                    rsp.end(disk.readFileSync(__dirname+"/index.html"));
-                    return;
-                };
-
-                if(!fs.existsSync(path))
-                {
-                    rsp.statusCode=404;
-                    rsp.end();
-                    return;
-                };
-
-                let stat = disk.statSync(req.url);
+                if(!disk.existsSync(path)){rsp.statusCode=404; rsp.end(); return}; // Not Found .. exits here if so
+                stat = disk.statSync(path);
 
                 if(stat.isFile(path))
                 {
                     rsp.statusCode=200;
+                    rsp.setHeader("Content-Type",mime.lookup(path));
                     rsp.end(disk.readFileSync(path));
                     return;
                 };
+
+                rsp.statusCode=403;
+                rsp.end(); return;
             };
 
             if(req.method == "POST") // if ANY request method is 'POST' ..
@@ -144,37 +138,45 @@
                     hash = trgt.split(".be/").pop().split("?v=").pop();
                     path = (__dirname+"/"+hash);
 
-                    disk.mkdirSync(path);
+                    if(disk.existsSync(path))
+                    {
+                        let cmd1 = spawn("rm", ["-rf",path], {cwd:__dirname});
+                        let cmd2 = spawn("rm", ["-rf",(path+".zip")], {cwd:__dirname});
+                    };
 
-                    rsp.statusCode = 200;
-                    rsp.setHeader("Content-Type","text/plain");
-                    rsp.setHeader("Content-Length",maxl);
-                    rsp.flushHeaders();
+                    setTimeout(()=>
+                    {
+                        disk.mkdirSync(path);
 
+                        rsp.statusCode = 200;
+                        rsp.setHeader("Content-Type","text/plain");
+                        rsp.setHeader("Content-Length",maxl);
+                        rsp.flushHeaders();
 
-                    ytdl
-                    (
-                        trgt,
-                        path,
-                        function(prc)
-                        {
-                            // console.log(prc);
-                            let nprc = ((prc*10) *1000);
-                            diff = Math.ceil(nprc - last);
-                            if(!prc || !diff){return};
-                            last = nprc;
-                            nbfr = bufr.slice(0,diff);
-                            rsp.write(nbfr,"utf8");
-                        },
-                        function()
-                        {
-                            zlib.sync.zip(path).compress().save(`${__dirname}/${hash}.zip`);
-                            rsp.end();
-                            console.log("done");
-
-                            console.log("compressing into zip ...");
-                        },
-                    );
+                        ytdl
+                        (
+                            trgt,
+                            path,
+                            function(prc)
+                            {
+                                // console.log(prc);
+                                let nprc = ((prc*10) *1000);
+                                diff = Math.ceil(nprc - last);
+                                if(!prc || !diff){return};
+                                last = nprc;
+                                nbfr = bufr.slice(0,diff);
+                                rsp.write(nbfr,"utf8");
+                            },
+                            function()
+                            {
+                                console.log("fetch done");
+                                console.log("compressing into zip ...");
+                                zlib.sync.zip(path).compress().save(`${__dirname}/${hash}.zip`);
+                                rsp.end();
+                                console.log("all done");
+                            },
+                        );
+                    },500);
                 });
 
             };

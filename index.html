@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
         <script>
             function sendit()
             {
-                let txt = document.getElementById("targetUrl").value;
-                let xhr = new XMLHttpRequest();  xhr.open("POST","/?v=1.0.0");
+                var txt = document.getElementById("targetUrl").value;
+                var xhr = new XMLHttpRequest();  xhr.open("POST","/?v=1.0.0");
+                var hsh = txt.split(".be/").pop().split("?v=").pop();
 
                 xhr.onloadstart = function()
                 {
@@ -30,13 +32,12 @@
 
                 xhr.onloadend = function()
                 {
+                    let lnk = document.createElement("a");
+                    lnk.setAttribute("href", (hsh+".zip"));
+                    lnk.setAttribute("download", "song.zip");
+                    lnk.innerHTML = "download";
+                    document.body.appendChild(lnk);
                     console.log("done");
-
-                    let pop = document.createElement("div");
-                    div.innerHTML = `
-                                        <a href="/song.zip" download >download</a>
-                                    `;
-                    document.body.appendChild(pop);
                 };
 
                 xhr.send(txt);
