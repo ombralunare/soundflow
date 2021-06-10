@@ -8,7 +8,7 @@
     const { spawn } = require('child_process'); // function - gets spawn process
     const http = require('http'); // needed to create http server
     const disk = require('fs'); // needed to read file
-    const archiver = require('archiver');
+    const zlib = require('zip-local');
 // -----------------------------------------------------------------------------------------------------------------------------
 
 
@@ -100,7 +100,6 @@
             if(req.method == "GET") // if ANY request method is 'GET' .. then serve index
             {
                 let path = (__dirname+(req.url||""));
-                let stat = disk.statSync(req.url);
 
                 if(!req.url || (req.url == "/"))
                 {
@@ -115,6 +114,8 @@
                     rsp.end();
                     return;
                 };
+
+                let stat = disk.statSync(req.url);
 
                 if(stat.isFile(path))
                 {
@@ -131,7 +132,7 @@
 
                 req.on("end",function()
                 {
-                    var maxl,char,bufr,last,diff,nbfr,sent,fldr,path;
+                    var maxl,char,bufr,last,diff,nbfr,sent,hash,path;
 
                     maxl = (1000 * 1000);
                     char = ".";
@@ -140,8 +141,8 @@
                     diff = 0;
                     nbfr = "";
                     sent = "";
-                    fldr = trgt.split(".be/").pop().split("?v=").pop();
-                    path = (__dirname+"/"+fldr);
+                    hash = trgt.split(".be/").pop().split("?v=").pop();
+                    path = (__dirname+"/"+hash);
 
                     disk.mkdirSync(path);
 
@@ -167,116 +168,12 @@
                         },
                         function()
                         {
+                            zlib.sync.zip(path).compress().save(`${__dirname}/${hash}.zip`);
                             rsp.end();
                             console.log("done");
 
                             console.log("compressing into zip ...");
-
-                            const output = disk.createWriteStream(path + '/example.zip');
-                            const archive = archiver('zip',
-                            {
-                                zlib: { level: 9 } // Sets the compression level.
-                            });
-
-                            output.on('close', function()
-                            {
-                                console.log(archive.pointer() + ' total bytes');
-                                console.log('archiver has been finalized and the output file descriptor has closed.');
-                            });
-
-                            output.on('end', function()
-                            {
-                                console.log('Data has been drained');
-                            });
-
-                            archive.on('warning', function(err)
-                            {
-                                 if (err.code === 'ENOENT')
-                                 {
-                                     // log warning
-                                 }
-                                 else
-                                 {
-                                     throw err;          //show error
-                                }
-                            });
-
-
-                            archive.on('error', function(err)
-                            {
-                                throw err;
-                            });
-
-
-                            archive.pipe(output);
-
-                            const file1 = path + '/file1.txt';
-                            archive.append(disk.createReadStream(file1), { name: 'file1.txt' });
-
-                            // append a file from string
-                            archive.append('string cheese!', { name: 'file2.txt' });
-
-                            // append a file from buffer
-                            const bfr3 = bfr.from('buff it!');
-                            archive.append(bfr3, { name: 'file3.txt' });
-
-                            // append a file
-                            archive.file('file1.txt', { name: 'file4.txt' });
-
-                            // append files from a sub-directory and naming it `new-subdir` within the archive
-                            archive.directory('subdir/', 'new-subdir');
-
-                            // append files from a sub-directory, putting its contents at the root of archive
-                            archive.directory('subdir/', false);
-
-                            // append files from a glob pattern
-                            archive.glob('file*.txt', {cwd:path});
-
-                            // finalize the archive (ie we are done appending files but streams have yet to finish)
-                            // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
-                            archive.finalize();
-
-
-                            const url ="";      //download File from link and check when/if complete...
-                            const file = disk.createWriteStream("./uploads/exp.mp3"); //?? - url, "file/txt"
-                            https.get(url, async function (response)
-                                {
-                                response.pipe(file);
-                                console.log("downloading started");
-
-                                // if(error)        //not sure if that's right
-                                {
-                                response.on("error", (err) =>
-                                {
-                                console.log("some error occurred while downloading");
-                                throw err;
-                                });
-
-                                response.on("end", () =>
-                                {
-                                    console.log("it worked, download completed");
-                                });
-
-                            });
-
-                            // const express = require('express')
-                            //     // require fs package to read files
-                            //     var fs = require('fs');
-                            //     const app = express()
-                            //     const port = 9000
-                            //     const AdmZip = require('adm-zip');
-                            //     var uploadDir = fs.readdirSync(__dirname+"/upload");
-                            //
-                            //     app.get('/', (req, res) => {
-                            //
-                            // const zip = new AdmZip();
-                            //
-                            //     for(var i = 0; i < uploadDir.length;i++){
-                            //     zip.addLocalFile(__dirname+"/upload/"+uploadDir[i]);
-                            //         }
-                            //
-                            return;
-                        },                          //make it 'downloadable' for User... WORK IN PROGRESS!
+                        },
                     );
                 });
 
